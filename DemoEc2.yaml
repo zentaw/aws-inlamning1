@@ -8,3 +8,5 @@ Resources:
       ImageId: "ami-0c1bc246476a5572b"
       InstanceType: t2.micro
       KeyName: MyDemoKey1
+
+test
