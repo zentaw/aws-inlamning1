@@ -1,5 +1,36 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: ASG with TG and LB
+
+Parameters:
+  ImageId:
+    Type: String
+    Description: 'Linux 2 AMI for Ireland eu-west1 Region'
+    Default: 'ami-0c1bc246476a5572b'
+  InstanceType:
+    Type: String
+    Description: Choosing t2 micro because it is free
+    Default: t2.micro
+  Key1:
+    Description: SSH Keypair to login to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: MyDemoKey1
+  Snet1:
+    Description: Subnet1 ID
+    Type: String
+    Default: subnet-03b2b746e62f3345d
+  Snet2:
+    Description: Subnet2 ID
+    Type: String
+    Default: subnet-0ff59f869374c89ac	
+  Snet3:
+    Description: Subnet3 ID
+    Type: String
+    Default: subnet-0b3372cb27bb57b45
+  VPCID:
+    Description: VPC ID
+    Type: String
+    Default: vpc-082a7c7f643853527
 
 Resources:
   HTTPSecGroup:
@@ -23,15 +54,13 @@ Resources:
   HTTPminALBFrontEnd:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: LoadBalancer to allow HTTP access to TargetGroup 80
+      GroupDescription: LoadBalancer to allow HTTP access to minTargetGroup 80
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-#   minLoadBalancer:
-#   minTargetGroup:
-#   minListerner:
+
   minLaunchTemplate:
     Type: 'AWS::EC2::LaunchTemplate'
     Properties:
@@ -55,6 +84,7 @@ Resources:
               systemctl start nginx
               systemctl enable nginx
               echo whazzaaaaaa!!!! from $(hostname -f) > /usr/share/nginx/html/index.html
+
   minASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
@@ -63,18 +93,21 @@ Resources:
         Version: !GetAtt minLaunchTemplate.LatestVersionNumber
       AvailabilityZones:
         Fn::GetAZs: ''
+      TargetGroupARNs:
+        - !Ref minTargetGroup
       MaxSize: '3'
       MinSize: '1'
       DesiredCapacity: '1'
       VPCZoneIdentifier:   
-        - subnet-03b2b746e62f3345d
-        - subnet-0ff59f869374c89ac
-        - subnet-0b3372cb27bb57b45
+        - !Ref Snet1
+        - !Ref Snet2
+        - !Ref Snet3
       MetricsCollection: 
         - Granularity: "1Minute"
           Metrics: 
             - "GroupMinSize"
             - "GroupMaxSize"
+
   minScaleUpPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
@@ -125,3 +158,36 @@ Resources:
         Value:
           Ref: minASG
       ComparisonOperator: LessThanThreshold
+
+  minLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties: 
+      IpAddressType: ipv4
+      Name: LB1
+      SecurityGroups: 
+        - !GetAtt HTTPminALBFrontEnd.GroupId
+      Subnets: 
+        - !Ref Snet1
+        - !Ref Snet2
+        - !Ref Snet3
+      Type: application
+      Scheme: internet-facing
+  
+  minTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      IpAddressType: ipv4
+      Name: TG1
+      Protocol: HTTP
+      Port: 80
+      VpcId: !Ref VPCID
+  
+  minListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref minTargetGroup
+      LoadBalancerArn: !Ref minLoadBalancer
+      Port: 80
+      Protocol: HTTP
