@@ -29,17 +29,9 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-
-  minLoadBalancer:
-    
-
-  minTargetGroup:
-  
-  minListerner:
-  
-  
-  
-  
+#   minLoadBalancer:
+#   minTargetGroup:
+#   minListerner:
   minLaunchTemplate:
     Type: 'AWS::EC2::LaunchTemplate'
     Properties:
@@ -60,7 +52,6 @@ Resources:
               systemctl start nginx
               systemctl enable nginx
               echo whazzaaaaaa!!!! from $(hostname -f) > /usr/share/nginx/html/index.html
-  
   minASG:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
