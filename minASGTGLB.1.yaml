@@ -75,6 +75,13 @@ Resources:
           Metrics: 
             - "GroupMinSize"
             - "GroupMaxSize"
+#   minASGAutoScalePolicy:
+#     Type: AWS::AutoScaling::ScalingPolicy
+#     Properties: 
+#       AutoScalingGroupName: !Ref minASG
+#       PolicyType: "SimpleScaling"
+#       AdjustmentType: "ChangeInCapacity"
+#       ScalingAdjustment: 1
   minScaleUpPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
     Properties:
