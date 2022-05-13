@@ -38,10 +38,11 @@ Resources:
     Properties:
       GroupDescription: Instance to allow HTTP access via port 80
       SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        SourceSecurityGroupName: !Ref HTTPminALBFrontEnd
+        FromPort: 80
+        ToPort: 80
+        # CidrIp: 0.0.0.0/0
   SSHSecGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -83,7 +84,7 @@ Resources:
               yum install stress -y
               systemctl start nginx
               systemctl enable nginx
-              echo whazzaaaaaa!!!! from $(hostname -f) > /usr/share/nginx/html/index.html
+              echo "Petri Sädesuo" from $(hostname -f) > /usr/share/nginx/html/index.html
 
   minASG:
     Type: AWS::AutoScaling::AutoScalingGroup
